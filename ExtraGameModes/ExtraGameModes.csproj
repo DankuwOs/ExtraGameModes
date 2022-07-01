@@ -80,7 +80,6 @@
     <Compile Include="CycleGameModes.cs" />
     <Compile Include="GunGame\GunGame.cs" />
     <Compile Include="Infected\Infected.cs" />
-    <Compile Include="Infected\InfectedPatches\Patch_HPEquippable.cs" />
     <Compile Include="Infected\InfectedPatches\Patch_BriefingRoom.cs" />
     <Compile Include="Infected\InfectedPatches\Patch_VRSDKSwitcher.cs" />
     <Compile Include="Infected\InfectedPatches\Patch_VTOLMPSceneManager.cs" />

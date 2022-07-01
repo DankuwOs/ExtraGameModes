@@ -28,7 +28,7 @@ public class Inject_ArmorySettings
             VRInteractable[] interactables = gameModeSettings.GetComponentsInChildren<VRInteractable>();
             foreach (VRInteractable interactable in interactables)
             {
-                // Persistent listerners can't be removed :~(
+                // Persistent listeners can't be removed :~(
                 
                 if (interactable.gameObject.name.Contains("Next"))
                 {

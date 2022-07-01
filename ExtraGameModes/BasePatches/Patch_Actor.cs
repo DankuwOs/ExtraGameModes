@@ -48,16 +48,6 @@ public static class ActorPatch
                             Infected.EnemySpawnObjective();
                             break;
                     }
-
-                    var count = __instance.weaponManager.equipCount;
-                    for (int i = 0; i < count; i++)
-                    {
-                        var weapon = __instance.weaponManager.GetEquip(i);
-                        var shortName = weapon.shortName;
-                        
-                        if (shortName != "GAU-22" || shortName != "Vulcan" || shortName != "Rail Gun")
-                            __instance.weaponManager.GBreakEquip(i);
-                    }
                 }
 
                 break;

@@ -25,7 +25,7 @@ public static class VTOLMPSceneManagerPatch
             Infected.ToAlliedTeamChange(player.steamUser);
         }
 
-        Random random = new Random();
+        var random = new Random();
 
         InfectPlayer(VTOLMPLobbyManager.instance.connectedPlayers[random.Next(VTOLMPLobbyManager.instance.connectedPlayers.Count)]);
     }
@@ -34,7 +34,7 @@ public static class VTOLMPSceneManagerPatch
     {
         await Task.Delay(TimeSpan.FromSeconds(Infected.InfectDelay));
         
-        VTOLMPSceneManager.instance.RPC_TeamChanged(infos.steamUser.Id, (int)Teams.Enemy);
+        Infected.ToEnemyTeamChange(infos.steamUser);
         
         if (infos == VTOLMPSceneManager.instance.localPlayer)
             Infected.EnemySpawnObjective();
