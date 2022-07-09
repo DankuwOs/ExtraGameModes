@@ -80,9 +80,11 @@
     <Compile Include="CycleGameModes.cs" />
     <Compile Include="GunGame\GunGame.cs" />
     <Compile Include="Infected\Infected.cs" />
-    <Compile Include="Infected\InfectedPatches\Patch_BriefingRoom.cs" />
     <Compile Include="Infected\InfectedPatches\Patch_VRSDKSwitcher.cs" />
     <Compile Include="Infected\InfectedPatches\Patch_VTOLMPSceneManager.cs" />
+    <Compile Include="Infected\InfectedSyncs\InfectedSync.cs" />
+    <Compile Include="Infected\InfectedSyncs\TimerSync.cs" />
+    <Compile Include="Infected\InfectedSyncs\WinSync.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="OITC\OITCPatches\Patch_HPEquipGun.cs" />
     <Compile Include="OITC\OneInTheChamber.cs" />
@@ -92,6 +94,7 @@
   <PropertyGroup>
     <PostBuildEvent>IF EXIST "D:\Games\Steam [Software no games here]\steamapps\common\VTOL VR\VTOLVR_ModLoader\VTOLVR-ModLoader.exe" (
 copy "$(TargetPath)" "D:\Games\Steam [Software no games here]\steamapps\common\VTOL VR\VTOLVR_ModLoader\projects\My Mods\Extra Game Modes\Builds\ExtraGameModes.dll"
+      copy "$(TargetPath)" "D:\Programs n Friends\[000] Unity Projects\VTOLVR 2022 Rip\VTOLVR\VTOLVR Rip\Assets\VTOL Modding Scripts\DLLS\ExtraGameModes.dll"
 )</PostBuildEvent>
   </PropertyGroup>
 </Project>

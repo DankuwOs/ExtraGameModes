@@ -1,69 +1,122 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Timers;
+using Harmony;
 using Steamworks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 using VTOLVR.Multiplayer;
+using static VTOLVR.Multiplayer.VTOLMPSceneManager;
 
 namespace ExtraGameModes.Infected
 {
     public class Infected : MonoBehaviour
     {
-
-        static float InfectBase = 180;
-        public static float InfectExtend = 60;
+        private const float InfectBase = 180;
+        public static float InfectTimer = InfectBase;
+        private const float InfectExtend = 60;
         public static bool Running = false;
-        
-        public static double InfectDelay = 15;
+        public const double InfectDelay = 15;
 
-        public static GameObject TMPGameObject;
+        private static GameObject _tmpGameObject;
         public static GameObject CameraGameObject;
+
+        public static UnityEvent<ulong> FirstInfectedPlayer = new UnityEvent<ulong>();
+        public static UnityEvent<int> TeamWon = new UnityEvent<int>();
+        public static UnityEvent<bool, float, float> InfectedTimer = new UnityEvent<bool, float, float>();
+
 
         public static void ActorKilled(Actor actor)
         {
-            if (actor.team == Teams.Allied)
-            {
-                ToEnemyTeamChange(actor.GetNetEntity().owner);
-            }
+            
+            if (actor.team != Teams.Allied || actor != instance.localPlayer.vehicleActor) return;
+            
+            ToEnemyTeamChange();
             
             if (Running)
                 ExtendCountdown();
         }
 
-        public static void ToAlliedTeamChange(Friend friend)
+        public static void ToAlliedTeamChange()
         {
-            VTOLMPSceneManager.instance.RPC_TeamChanged(friend.Id, (int)Teams.Allied);
+            if (instance.localPlayer.selectedSlot != -1)
+                instance.VacateSlot();
+            
+            List<VehicleSlotListItem> items = Traverse.Create(typeof(VTOLMPBriefingRoom)).Field("slotUIs").GetValue() as List<VehicleSlotListItem>;
+            if (items != null)
+            {
+                items.Clear();
+                Traverse.Create(typeof(VTOLMPBriefingRoom)).Field("slotUIs")
+                    .SetValue(items); // Clear the slot UI so no no bad do thing :~)
+            }
+            
+            instance.RequestTeam(Teams.Allied);
+            
+            for (int i = 0; i < instance.alliedSlots.Count; i++)
+            {
+                if (instance.alliedSlots[i].player == null)
+                {
+                    instance.RequestSlot(instance.alliedSlots[i]); // player will probably get a vehicle they don't want. lmao idiot
+                    break;
+                }
+            }
+
         }
-        public static void ToEnemyTeamChange(Friend friend)
+        public static void ToEnemyTeamChange()
         {
-            VTOLMPSceneManager.instance.RPC_TeamChanged(friend.Id, (int)Teams.Enemy);
+            if (instance.localPlayer.selectedSlot != -1)
+                instance.VacateSlot();
+            
+            List<VehicleSlotListItem> items = Traverse.Create(typeof(VTOLMPBriefingRoom)).Field("slotUIs").GetValue() as List<VehicleSlotListItem>;
+            if (items != null)
+            {
+                items.Clear();
+                Traverse.Create(typeof(VTOLMPBriefingRoom)).Field("slotUIs")
+                    .SetValue(items); // Clear the slot UI so no no bad do thing :~)
+            }
+
+            instance.RequestTeam(Teams.Enemy);
+
+            for (int i = 0; i < instance.enemySlots.Count; i++)
+            {
+                if (instance.enemySlots[i].player == null)
+                {
+                    instance.RequestSlot(instance.enemySlots[i]);
+                    break;
+                }
+            }
+            
             CheckWin("Enemy");
         }
-
+        
         public static void CheckWin(string team)
         {
             switch (team)
             {
                 case "Allied":
-                    if (VTOLMPSceneManager.instance.GetPlayers(Teams.Allied).Length > 0)
+                    if (instance.alliedSlots.Count(slot => slot.player != null) > 0)
                     {
+                        Debug.Log("Allied win");
+                        
                         AlliedWin();
+                        ResetValues();
                     }
                     break;
                 case "Enemy":
                 {
-                    if (VTOLMPSceneManager.instance.GetPlayers(Teams.Allied).Length == 0)
+                    if (instance.alliedSlots.Count(slot => slot.player != null) == 0)
                     {
+                        Debug.Log("Enemy win");
                         EnemyWin();
+                        ResetValues();
                     }
                     break;
                 }
             }
-            
-
-            
         }
 
         public static GameObject CreateLabel()
@@ -92,133 +145,127 @@ namespace ExtraGameModes.Infected
 
             return tmpObject;
         }
+        
+        public static void SetText(string text, float time)
+        {
+            if (_tmpGameObject == null)
+            {
+                _tmpGameObject = CreateLabel();
+            }
+            
+            var tmp = _tmpGameObject.GetComponent<VTTextMeshPro>();
+            tmp.text = text;
+            
+            var timer = new Timer();
+            timer.Interval = time * 1000;
+            timer.Start();
+            timer.AutoReset = false;
+            timer.Elapsed += (sender, args) =>
+            {
+                tmp.text = "";
+                timer.Dispose();
+            };
+        }
 
         public static void StartCountdown()
         {
-            InfectBase = 180;
+            InfectTimer = InfectBase;
+            
             Running = true;
-            if (VTOLMPSceneManager.instance.localPlayer.team == Teams.Allied)
+            if (instance.localPlayer.team == Teams.Allied)
                 EnemyInfected();
+            
+            if (VTOLMPUtils.IsMPAndHost())
+            {
+                if (InfectedTimer == null)
+                    InfectedTimer = new UnityEvent<bool, float, float>();
+                InfectedTimer.Invoke(Running, InfectTimer, InfectBase);
+            }
         }
 
         public static void ExtendCountdown()
         {
-            InfectBase += InfectExtend;
-        }
+            InfectTimer += InfectExtend;
 
-        public void Update()
-        {
-            if (Running)
+            if (VTOLMPUtils.IsMPAndHost())
             {
-                InfectBase -= Time.deltaTime;
-
-                if (InfectBase <= 0)
-                {
-                    CheckWin("Allied");
-                    Running = false;
-                }
-
+                if (InfectedTimer == null)
+                    InfectedTimer = new UnityEvent<bool, float, float>();
+                InfectedTimer.Invoke(Running, InfectTimer, InfectBase);
             }
         }
-        
-        
+
+        public static VTOLMPTeamSelectUI TeamSelectUI;
+
+        public static void InfectedUpdate()
+        {
+            if (!Running) return;
+            InfectTimer -= Time.deltaTime;
+
+            if (InfectTimer <= 0)
+            {
+                CheckWin("Allied");
+                
+                ResetValues();
+                
+                if (VTOLMPUtils.IsMPAndHost())
+                {
+                    if (InfectedTimer == null)
+                        InfectedTimer = new UnityEvent<bool, float, float>();
+                    InfectedTimer.Invoke(Running, InfectTimer, InfectBase);
+                }
+            }
+        }
+
+        public static void ResetValues()
+        {
+            Running = false;
+            InfectTimer = InfectBase;
+        }
         
         public static void AlliedSpawnObjective()
         {
-            if (TMPGameObject == null)
-            {
-                TMPGameObject = CreateLabel();
-            }
-            var tmp = TMPGameObject.GetComponent<VTTextMeshPro>();
-            
-            tmp.text = "INFECTED: You or a loved one will be infected in " + InfectDelay + " seconds. Survive for " +
-                       InfectBase + " seconds!";
-            var timer = new Timer();
-            timer.Interval = 7.5f * 1000;
-            timer.Start();
-            timer.AutoReset = false;
-            timer.Elapsed += (sender, args) =>
-            {
-                tmp.text = "";
-                timer.Dispose();
-            };
+            SetText("INFECTED: You or a loved one will be infected in " + InfectDelay + " seconds. Survive for " +
+                    InfectBase + " seconds!", 7.5f);
         }
 
         public static void EnemySpawnObjective()
         {
-            if (TMPGameObject == null)
-            {
-                TMPGameObject = CreateLabel();
-            }
-            var tmp = TMPGameObject.GetComponent<VTTextMeshPro>();
-            tmp.text = "You've been infected, kill non infected people to move them to your team!";
-            Timer timer = new Timer();
-            timer.Interval = 7.5f * 1000;
-            timer.Start();
-            timer.AutoReset = false;
-            timer.Elapsed += (sender, args) =>
-            {
-                tmp.text = "";
-                timer.Dispose();
-            };
+            SetText("You've been infected, kill non infected people to move them to your team!", 7.5f);
         }
         
         public static void EnemyInfected()
         {
-            if (TMPGameObject == null)
-            {
-                TMPGameObject = CreateLabel();
-            }
-            var tmp = TMPGameObject.GetComponent<VTTextMeshPro>();
-            tmp.text = "An infected has been chosen!";
-            Timer timer = new Timer();
-            timer.Interval = 7.5f * 1000;
-            timer.Start();
-            timer.AutoReset = false;
-            timer.Elapsed += (sender, args) =>
-            {
-                tmp.text = "";
-                timer.Dispose();
-            };
+            SetText("An infected has been chosen!", 7.5f);
         }
         
         
         public static void AlliedWin()
         {
-            if (TMPGameObject == null)
+            if (VTOLMPUtils.IsMPAndHost())
             {
-                TMPGameObject = CreateLabel();
+                if (TeamWon == null)
+                    TeamWon = new UnityEvent<int>();
+                TeamWon.Invoke(0);
             }
-            var tmp = TMPGameObject.GetComponent<VTTextMeshPro>();
-            tmp.text = "Survivors win!";
-            Timer timer = new Timer();
-            timer.Interval = 7.5f * 1000;
-            timer.Start();
-            timer.AutoReset = false;
-            timer.Elapsed += (sender, args) =>
-            {
-                tmp.text = "";
-                timer.Dispose();
-            };
+
+            SetText("Survivors win!", 15f);
         }
 
         public static void EnemyWin()
         {
-            if (TMPGameObject == null)
+            if (VTOLMPUtils.IsMPAndHost())
             {
-                TMPGameObject = CreateLabel();
+                if (TeamWon == null)
+                    TeamWon = new UnityEvent<int>();
+                TeamWon.Invoke(1);
             }
-            var tmp = TMPGameObject.GetComponent<VTTextMeshPro>();
-            tmp.text = "Infected win!";
-            Timer timer = new Timer();
-            timer.Interval = 7.5f * 1000;
-            timer.Start();
-            timer.AutoReset = false;
-            timer.Elapsed += (sender, args) =>
-            {
-                tmp.text = "";
-                timer.Dispose();
-            };
+
+            SetText("Infected win!", 15f);
         }
+
+
+
+        
     }
 }

@@ -29,6 +29,15 @@ namespace ExtraGameModes
             instance.PatchAll();
             
             base.ModLoaded();
+
+            Infected.Infected.TeamSelectUI = gameObject.AddComponent<VTOLMPTeamSelectUI>();
+            DontDestroyOnLoad(Infected.Infected.TeamSelectUI);
+        }
+
+        public void Update()
+        {
+            if (CycleGameModes.CurrentGameMode == "Infected")
+                Infected.Infected.InfectedUpdate(); // Infected is has monobehaviour but no work??
         }
     }
 }

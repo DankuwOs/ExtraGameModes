@@ -12,21 +12,6 @@ public class Custom_LobbyData
         if (VTOLMPLobbyManager.isLobbyHost)
         {
             VTOLMPLobbyManager.currentLobby.SetData("Danku_GameMode", CycleGameModes.CurrentGameMode);
-            
-            switch (CycleGameModes.CurrentGameMode)
-            {
-                case "Infected":
-                    var infectedScenario = VTOLMPLobbyManager.GetScenario(VTOLMPLobbyManager.currentLobby).scenario;
-                    
-                    // dunno if this works, but sure.
-                    infectedScenario.autoPlayerCount = false;
-                    
-                    infectedScenario.mpPlayerCount = 32; // Doubt you can even go this high, but sure.
-                    infectedScenario.overrideAlliedPlayerCount = 32;
-                    infectedScenario.overrideEnemyPlayerCount = 16;
-                    break;
-            }
-            
         }
         else if (VTOLMPLobbyManager.isInLobby)
         {
