@@ -63,6 +63,9 @@
     <Reference Include="UnityEngine">
       <HintPath>..\Dependencies\UnityEngine.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>..\..\..\..\..\VTOLVR_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\Dependencies\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
@@ -78,7 +81,8 @@
     <Compile Include="BasePatches\Inject_GameModeSettings.cs" />
     <Compile Include="BasePatches\Patch_Actor.cs" />
     <Compile Include="CycleGameModes.cs" />
-    <Compile Include="GunGame\GunGame.cs" />
+    <Compile Include="HelperScripts\LoadAssetBundle.cs" />
+    <Compile Include="HelperScripts\SettingsObject.cs" />
     <Compile Include="Infected\Infected.cs" />
     <Compile Include="Infected\InfectedPatches\Patch_VRSDKSwitcher.cs" />
     <Compile Include="Infected\InfectedPatches\Patch_VTOLMPSceneManager.cs" />
@@ -89,6 +93,7 @@
     <Compile Include="OITC\OITCPatches\Patch_HPEquipGun.cs" />
     <Compile Include="OITC\OneInTheChamber.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ShotInTheDark\ShotInTheDark.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

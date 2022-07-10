@@ -12,50 +12,38 @@ public class Inject_ArmorySettings
 {
     public static void Postfix(VTMPScenarioSettings __instance)
     {
-        if (!doneSettings)
+        if (Main.settingsPrefab == null)
         {
-            GameObject settingsTemplate = __instance.envOptionsUIobj.gameObject;
-            GameObject gameModeSettings = GameObject.Instantiate(settingsTemplate, settingsTemplate.transform.parent);
-            gameModeSettings.SetActive(true);
-            gameModeSettings.transform.localPosition = new Vector3(-322, -397, 0);
-
-
-            gameModeSettings.transform.Find("envTitle").GetComponent<Text>().text = "Game Mode";
-            var text = gameModeSettings.transform.Find("envText").GetComponent<Text>();
-            
-            text.text = Main.Modes[0];
-            
-            VRInteractable[] interactables = gameModeSettings.GetComponentsInChildren<VRInteractable>();
-            foreach (VRInteractable interactable in interactables)
-            {
-                // Persistent listeners can't be removed :~(
-                
-                if (interactable.gameObject.name.Contains("Next"))
-                {
-                    interactable.interactableName = "Next Gamemode";
-                    interactable.OnInteract = new UnityEvent();
-                    interactable.OnInteract.AddListener(delegate
-                    {
-                        text.text = CycleGameModes.Next(text.text);
-                    });
-                }
-                
-                if (interactable.gameObject.name.Contains("Prev"))
-                {
-                    interactable.interactableName = "Previous Gamemode";
-                    interactable.OnInteract = new UnityEvent();
-                    interactable.OnInteract.AddListener(delegate
-                    {
-                        text.text = CycleGameModes.Previous(text.text);
-                    });
-                }
-            }
-            
-            doneSettings = true;
-            
-            gameModeSettings.GetComponentInParent<VRPointInteractableCanvas>().RefreshInteractables();
+            Debug.Log("[Extra Game Modes] Settings prefab is null");
+            return;
         }
-    }
+        
+        var settingsObj = GameObject.Instantiate(Main.settingsPrefab, __instance.transform.Find("displayObj"));
 
-    public static bool doneSettings = false;
+        var settings = settingsObj.GetComponent<SettingsObject>();
+
+        var title = settings.title;
+        var text = settings.description;
+        
+        title.text = "Game Mode";
+        text.text  = Main.Modes[0];
+
+        
+        foreach (VRInteractable interactable in settings.vrInteractables)
+        {
+            if (interactable.gameObject.name.Contains("Next"))
+            {
+                interactable.OnInteract = new UnityEvent();
+                interactable.OnInteract.AddListener(delegate { text.text = CycleGameModes.Next(text.text); });
+            }
+
+            if (interactable.gameObject.name.Contains("Prev"))
+            {
+                interactable.OnInteract = new UnityEvent();
+                interactable.OnInteract.AddListener(delegate { text.text = CycleGameModes.Previous(text.text); });
+            }
+        }
+
+        settings.GetComponentInParent<VRPointInteractableCanvas>().RefreshInteractables();
+    }
 }

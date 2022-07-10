@@ -195,8 +195,6 @@ namespace ExtraGameModes.Infected
             }
         }
 
-        public static VTOLMPTeamSelectUI TeamSelectUI;
-
         public static void InfectedUpdate()
         {
             if (!Running) return;

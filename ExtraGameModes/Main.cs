@@ -1,13 +1,16 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Harmony;
 using Rewired;
+using Steamworks.Data;
 using UnityEngine;
 using VTOLVR.Multiplayer;
+using Color = UnityEngine.Color;
 
 namespace ExtraGameModes
 {
@@ -17,11 +20,12 @@ namespace ExtraGameModes
         {
             "None",
             "OITC",
-            "Gun Game",
+            "Shot in the Dark",
             "Infected"
         };
-        
-        
+
+        public static GameObject settingsPrefab = null;
+
         // This method is run once, when the Mod Loader is done initialising this game object
         public override void ModLoaded()
         {
@@ -29,10 +33,12 @@ namespace ExtraGameModes
             instance.PatchAll();
             
             base.ModLoaded();
-
-            Infected.Infected.TeamSelectUI = gameObject.AddComponent<VTOLMPTeamSelectUI>();
-            DontDestroyOnLoad(Infected.Infected.TeamSelectUI);
+            
+            string pathToBundle = Path.Combine(ModFolder, "settings.splooge");
+            settingsPrefab = HelperScripts.FileLoader.GetAssetBundleAsGameObject(pathToBundle, "gameModeObject");
         }
+
+        
 
         public void Update()
         {
